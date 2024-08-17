@@ -1,21 +1,89 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
+import SearchHeader from "./components/search-header";
+import DOMPurify from "dompurify";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkRehype from "remark-rehype";
+import rehypeReact from "rehype-react";
+import { Quote } from "../components/quote";
+import { jsx, jsxs } from "react/jsx-runtime";
 
-export default function page() {
+export default function Page() {
+  const [input, setInput] = useState<string>("");
+  const [output, setOutput] = useState<string>("");
+
+  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
+
+  const handleSearch = async () => {
+    if (input.length <= 3) {
+      return;
+    }
+    try {
+      const response = await fetch("/api/search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ input }),
+      });
+
+      if (response.status !== 200) {
+        console.error("Error searching for book: ", response.statusText);
+        return;
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+
+      while (!done) {
+        // @ts-ignore
+        const { value, done: isDone } = await reader?.read();
+        done = isDone;
+        if (value) {
+          const chunk = decoder.decode(value);
+          setOutput((prev) => prev + chunk);
+        }
+      }
+    } catch (error) {
+      console.error("Error searching for book: ", error);
+    }
+  };
+
+  const renderMarkdown = (text: string) => {
+    const cleanHtml = DOMPurify.sanitize(text);
+    const processedContent = unified()
+      .use(remarkParse) // Parse the Markdown text
+      .use(remarkRehype) // Convert Markdown to HTML
+      .use(rehypeReact, {
+        jsx: jsx,
+        jsxs: jsxs,
+        createElement: React.createElement,
+        components: {
+          li: Quote,
+          p: Header,
+        },
+        Fragment: React.Fragment,
+      } as any)
+      .processSync(cleanHtml).result;
+
+    return processedContent;
+  };
+
   return (
     <div className="min-h-screen sm:mx-auto mx-14">
-      <h1 className="text-3xl underline  text-left text-black font-bold mt-12">
-        Search
-      </h1>
-      <div className="flex justify-center items-baseline mt-12 gap-3">
-        <input
-          type="text"
-          placeholder="Search for a book"
-          className="input input-border bg-transparent"
-        />
-        <button className="flex items-center justify-center px-6 py-2.5 text-center duration-200 bg-[#ffdb47] border-2 border-black rounded-md nline-flex hover:bg-transparent hover:border-black hover:text-black focus:outline-none focus-visible:outline-black text-sm focus-visible:ring-black text-[#434343] w-1/2 sm:w-1/3 mt-4">
-          Search 🧠
-        </button>
-      </div>
+      <SearchHeader
+        handleSearchInput={handleSearchInput}
+        handleSearch={handleSearch}
+      />
+      <div className="mx-14 mt-16 space-y-6">{renderMarkdown(output)}</div>
     </div>
   );
+}
+
+function Header({ children }: { children: React.ReactNode }): JSX.Element {
+  return <div className="font-bold text-base text-black">{children}</div>;
 }
