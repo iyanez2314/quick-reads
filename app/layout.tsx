@@ -6,6 +6,7 @@ import "./globals.css";
 import Container from "./contianer";
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const inter = Inter({ subsets: ["latin"] });
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"] });
@@ -22,15 +23,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html className="bg-white" lang="en">
-      <body className={lunasima.className}>
-        <Container>
-          <Navbar />
-
-          {children}
-        </Container>
-        <Footer />
-      </body>
-    </html>
+    <ClerkProvider>
+      <html className="bg-white" lang="en">
+        <body className={lunasima.className}>
+          <Container>
+            <Navbar />
+            {children}
+          </Container>
+          <Footer />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

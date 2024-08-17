@@ -1,7 +1,12 @@
+"use client";
 import React from "react";
 import { Book } from "./book";
+import Link from "next/link";
+import { SignIn, SignInButton, SignOutButton, useAuth } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
 
 export default function Navbar() {
+  const { isSignedIn } = useAuth();
   return (
     <div className="navbar bg-white">
       <div className="navbar-start">
@@ -26,11 +31,32 @@ export default function Navbar() {
             tabIndex={0}
             className="menu menu-sm dropdown-content bg-[#434343] rounded-box z-[1] mt-3 w-52 p-2 shadow text-white"
           >
+            {!isSignedIn && (
+              <>
+                <li>
+                  <a>Pricing</a>
+                </li>
+                <li>
+                  <a>FAQ</a>
+                </li>
+              </>
+            )}
+            {isSignedIn && (
+              <>
+                <li>
+                  <Link href="/search">Search</Link>
+                </li>
+                <li>
+                  <Link href="/dashboard">Dashboard</Link>
+                </li>
+              </>
+            )}
             <li>
-              <a>Pricing</a>
-            </li>
-            <li>
-              <a>FAQ</a>
+              {isSignedIn ? (
+                <SignOutButton redirectUrl="/" />
+              ) : (
+                <SignInButton forceRedirectUrl="/dashboard" />
+              )}
             </li>
           </ul>
         </div>

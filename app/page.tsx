@@ -1,9 +1,17 @@
+"use client";
 import Image from "next/image";
 import Navbar from "./components/navbar";
 import { Check } from "./components/check";
 import { Arrowright } from "./components/arrow-right";
+import { SignIn, SignInButton, useAuth } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
 
 export default function Home() {
+  const { isSignedIn } = useAuth();
+
+  if (isSignedIn) {
+    redirect("/dashboard");
+  }
   return (
     <main className="">
       {/* Header */}
