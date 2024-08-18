@@ -28,7 +28,6 @@ export default function Page() {
     }
 
     setOutput("");
-    setInput("");
     setLoading(true);
     try {
       const response = await fetch("/api/search", {
@@ -72,6 +71,11 @@ export default function Page() {
     }
   };
 
+  const addedQuote = (quote: string) => {
+    console.log(DOMPurify.sanitize(quote));
+    console.log(input);
+  };
+
   const renderMarkdown = (text: string) => {
     const preProcessed = preProcessMarkdown(text);
     const processedContent = unified()
@@ -81,7 +85,9 @@ export default function Page() {
         jsx: jsx,
         jsxs: jsxs,
         components: {
-          blockquote: Quote,
+          blockquote: (props: any) => (
+            <Quote {...props} onQuoteClicked={addedQuote} />
+          ),
           p: Paragraph,
           li: Paragraph,
           h1: Header,
