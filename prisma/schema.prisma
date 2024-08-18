@@ -1,0 +1,45 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+
+model User {
+  id       String   @id @default(cuid())
+  clerkId  String   @unique
+  email    String   @unique
+  name     String?
+  quotes   QuotesOnUsers[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Quotes {
+  id       String   @id @default(cuid())
+  quote    String
+  book     String
+  users    QuotesOnUsers[]
+}
+
+model QuotesOnUsers {
+  id       String   @id @default(cuid()) // Add a unique ID field for the join table
+  userId   String
+  quoteId  String
+  user     User     @relation(fields: [userId], references: [id])
+  quote    Quotes   @relation(fields: [quoteId], references: [id])
+
+  @@unique([userId, quoteId]) // This enforces uniqueness of the pair
+}
+
+

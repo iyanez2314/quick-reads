@@ -1,9 +1,21 @@
-import React, { Suspense } from "react";
+import React, { Fragment, Suspense } from "react";
+import { auth } from "@clerk/nextjs/server";
+import SavedQuote from "./components/saved-quote";
+import Loading from "../components/loading";
+import { usersQuotes } from "@/data-layer/user";
 
-export default function SavedQuotesContainer() {
+export default async function SavedQuotesContainer() {
+  const { userId } = auth();
+
+  if (!userId) {
+    return null;
+  }
+
+  const usersSavedQuotes = (await usersQuotes(userId)) as Array<any>;
+
   return (
-    <div className="flex flex-col">
-      <div className="flex items-baseline gap-4 justify-center">
+    <div className="flex flex-col items-center">
+      <div className="flex items-baseline w-full sm:w-1/2  justify-between">
         <h1 className="text-xl text-left text-black font-bold mt-12">
           Your Saved Quotes
         </h1>
@@ -16,16 +28,23 @@ export default function SavedQuotesContainer() {
       </div>
 
       {/* Quotes container */}
-      <Suspense fallback={<div>Loading...</div>}>
-        <div className="flex flex-col gap-4 mt-4 ">
-          <div className="flex flex-col gap-2 bg-[#ffffff] shadow-2xl p-6 rounded-2xl">
-            <p className="text-black font-bold">Book Title</p>
-            <p className="text-black">"Quote 1 content"</p>
-          </div>
-          <div className="flex flex-col gap-2 bg-[#ffffff] shadow-2xl p-6 rounded-2xl">
-            <p className="text-black font-bold">Book Title</p>
-            <p className="text-black">"Quote 2 content"</p>
-          </div>
+      <Suspense fallback={<Loading />}>
+        <div className="flex flex-col gap-4 mt-4 items-center pb-12 ">
+          {
+            // If there are no quotes saved, show a message
+            usersSavedQuotes.length === 0 && (
+              <p className="text-lg">You have not saved any quotes yet. 🥺</p>
+            )
+          }
+          {usersSavedQuotes.map((quote) => (
+            <Fragment key={quote.quote.id}>
+              <SavedQuote
+                id={quote.quote.id}
+                bookTitle={quote.quote.book}
+                quote={quote.quote.quote}
+              />
+            </Fragment>
+          ))}
         </div>
       </Suspense>
     </div>

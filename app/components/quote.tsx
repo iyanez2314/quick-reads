@@ -1,12 +1,12 @@
 import React from "react";
-
 interface QuoteProps {
   children: React.ReactNode;
   onQuoteClicked: (quote: string) => void;
+  currentInput: string;
 }
 
-export function Quote({ children, onQuoteClicked }: QuoteProps) {
-  const handleClick = () => {
+export function Quote({ children, onQuoteClicked, currentInput }: QuoteProps) {
+  const handleClick = async () => {
     if (onQuoteClicked) {
       const quoteText = React.Children.toArray(children)
         .map((child) => {
@@ -24,9 +24,11 @@ export function Quote({ children, onQuoteClicked }: QuoteProps) {
         })
         .join(" ")
         .trim();
+
       onQuoteClicked(quoteText);
     }
   };
+
   return (
     <blockquote className="bg-gray-100 border-l-4 border-blue-500 text-gray-700 italic p-4 flex justify-between">
       {children}

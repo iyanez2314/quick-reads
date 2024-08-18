@@ -8,6 +8,9 @@ import remarkRehype from "remark-rehype";
 import rehypeReact from "rehype-react";
 import { Quote } from "../components/quote";
 import { jsx, jsxs } from "react/jsx-runtime";
+import { attachQuoteToUser, QuoteArg } from "../actions/actions";
+import Toast from "../components/toast";
+import Loading from "../components/loading";
 
 const preProcessMarkdown = (text: string) => {
   return text.replace(/\[quote\](.*?)\[\/quote\]/g, "> $1");
@@ -17,6 +20,11 @@ export default function Page() {
   const [input, setInput] = useState<string>("");
   const [output, setOutput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [toastVisible, setToastVisible] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState({
+    text: "",
+    subText: "",
+  });
 
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
@@ -71,9 +79,48 @@ export default function Page() {
     }
   };
 
-  const addedQuote = (quote: string) => {
-    console.log(DOMPurify.sanitize(quote));
-    console.log(input);
+  const addedQuote = async (quote: string) => {
+    try {
+      const addedQuote = DOMPurify.sanitize(quote);
+
+      const attachmentObject: QuoteArg = {
+        quote: addedQuote,
+        book: input,
+      };
+
+      const awaitAttachment = await attachQuoteToUser(attachmentObject);
+
+      if (awaitAttachment.status === 201) {
+        setToastVisible(true);
+        setToastMessage({
+          text: "Quote added successfully",
+          subText: "Check your dashboard for your quotes",
+        });
+        setTimeout(() => {
+          setToastVisible(false);
+        }, 3000);
+        return;
+      }
+      // Show an error toast
+      setToastVisible(true);
+      setToastMessage({
+        text: "Error adding quote",
+        subText: "Please try again",
+      });
+      setTimeout(() => {
+        setToastVisible(false);
+      }, 3000);
+    } catch (error) {
+      // Show an error toast
+      setToastVisible(true);
+      setToastMessage({
+        text: "Error adding quote",
+        subText: "Please try again",
+      });
+      setTimeout(() => {
+        setToastVisible(false);
+      }, 3000);
+    }
   };
 
   const renderMarkdown = (text: string) => {
@@ -86,7 +133,11 @@ export default function Page() {
         jsxs: jsxs,
         components: {
           blockquote: (props: any) => (
-            <Quote {...props} onQuoteClicked={addedQuote} />
+            <Quote
+              {...props}
+              onQuoteClicked={addedQuote}
+              currentInput={input}
+            />
           ),
           p: Paragraph,
           li: Paragraph,
@@ -101,6 +152,13 @@ export default function Page() {
     return processedContent;
   };
 
+  const renderToast = () => {
+    if (!toastVisible) {
+      return null;
+    }
+    return <Toast text={toastMessage.text} subText={toastMessage.subText} />;
+  };
+
   return (
     <div className="min-h-screen sm:mx-auto mx-14">
       <SearchHeader
@@ -109,11 +167,14 @@ export default function Page() {
       />
       {loading ? (
         <div className="flex justify-center items-center h-96">
-          <span className="loading loading-dots loading-lg"></span>
+          <Loading />
         </div>
       ) : (
         <div className="mt-16 space-y-6 pb-8">{renderMarkdown(output)}</div>
       )}
+
+      {/* Toast */}
+      {renderToast()}
     </div>
   );
 }
