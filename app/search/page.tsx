@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { Fragment, useState } from "react";
 import SearchHeader from "./components/search-header";
 import DOMPurify from "dompurify";
 import { unified } from "unified";
@@ -9,9 +9,14 @@ import rehypeReact from "rehype-react";
 import { Quote } from "../components/quote";
 import { jsx, jsxs } from "react/jsx-runtime";
 
+const preProcessMarkdown = (text: string) => {
+  return text.replace(/\[quote\](.*?)\[\/quote\]/g, "> $1");
+};
+
 export default function Page() {
   const [input, setInput] = useState<string>("");
   const [output, setOutput] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
@@ -21,6 +26,10 @@ export default function Page() {
     if (input.length <= 3) {
       return;
     }
+
+    setOutput("");
+    setInput("");
+    setLoading(true);
     try {
       const response = await fetch("/api/search", {
         method: "POST",
@@ -32,6 +41,7 @@ export default function Page() {
 
       if (response.status !== 200) {
         console.error("Error searching for book: ", response.statusText);
+        setLoading(false);
         return;
       }
 
@@ -43,32 +53,44 @@ export default function Page() {
         // @ts-ignore
         const { value, done: isDone } = await reader?.read();
         done = isDone;
+        let isFirstChunk: boolean = true;
         if (value) {
           const chunk = decoder.decode(value);
+
+          if (isFirstChunk) {
+            setLoading(false);
+            isFirstChunk = false;
+          }
           setOutput((prev) => prev + chunk);
         }
       }
     } catch (error) {
       console.error("Error searching for book: ", error);
+      setLoading(false);
+    } finally {
+      setLoading(false);
     }
   };
 
   const renderMarkdown = (text: string) => {
-    const cleanHtml = DOMPurify.sanitize(text);
+    const preProcessed = preProcessMarkdown(text);
     const processedContent = unified()
-      .use(remarkParse) // Parse the Markdown text
-      .use(remarkRehype) // Convert Markdown to HTML
+      .use(remarkParse)
+      .use(remarkRehype)
       .use(rehypeReact, {
         jsx: jsx,
         jsxs: jsxs,
-        createElement: React.createElement,
         components: {
-          li: Quote,
-          p: Header,
+          blockquote: Quote,
+          p: Paragraph,
+          li: Paragraph,
+          h1: Header,
+          h2: Header,
+          h3: Header,
         },
-        Fragment: React.Fragment,
+        Fragment,
       } as any)
-      .processSync(cleanHtml).result;
+      .processSync(preProcessed).result;
 
     return processedContent;
   };
@@ -79,11 +101,21 @@ export default function Page() {
         handleSearchInput={handleSearchInput}
         handleSearch={handleSearch}
       />
-      <div className="mx-14 mt-16 space-y-6">{renderMarkdown(output)}</div>
+      {loading ? (
+        <div className="flex justify-center items-center h-96">
+          <span className="loading loading-dots loading-lg"></span>
+        </div>
+      ) : (
+        <div className="mt-16 space-y-6 pb-8">{renderMarkdown(output)}</div>
+      )}
     </div>
   );
 }
 
 function Header({ children }: { children: React.ReactNode }): JSX.Element {
   return <div className="font-bold text-base text-black">{children}</div>;
+}
+
+function Paragraph({ children }: { children: React.ReactNode }): JSX.Element {
+  return <div className="text-black">{children}</div>;
 }

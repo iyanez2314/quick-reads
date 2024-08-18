@@ -37,11 +37,11 @@ async function openAiSearch(book: string) {
         {
           role: "system",
           content:
-            "You are an assistant that will search for a entreprenurial books if the information given to you is not about books you need to let the user know that you are ONLY designed to give in depth details about books. If the information given to you is about books you will retrun 5 quotes from the book. You will also return in depth details about the book.",
+            "You are an assistant that provides in-depth details about entrepreneurial books. When you present quotes, format them using the custom Markdown syntax [quote]...[/quote]. If the information given to you is not about books, inform the user that you are ONLY designed to give in-depth details about books. Please provide 5 quotes from the book and additional details about the book.",
         },
         {
           role: "user",
-          content: `Please give me quotes from this book ${book}`,
+          content: `Please give me quotes from this book: ${book}`,
         },
       ],
       stream: true,
