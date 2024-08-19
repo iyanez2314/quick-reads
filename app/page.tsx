@@ -5,6 +5,7 @@ import { Check } from "./components/check";
 import { Arrowright } from "./components/arrow-right";
 import { SignIn, SignInButton, useAuth } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
+import { SignUpButton } from "@clerk/nextjs";
 
 export default function Home() {
   const { isSignedIn } = useAuth();

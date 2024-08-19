@@ -1,5 +1,8 @@
 import { NextResponse, NextRequest } from "next/server";
 import openai from "@/app/services/openai";
+import { auth } from "@clerk/nextjs/server";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest, res: NextResponse) {
   try {
@@ -31,6 +34,37 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
 async function openAiSearch(book: string) {
   try {
+    const { userId } = auth();
+
+    console.log(userId);
+
+    if (!userId) {
+      return NextResponse.json({
+        message: "unauthorized request made",
+        status: 401,
+      });
+    }
+
+    console.log(userId);
+
+    const user = await prisma.user.findUnique({
+      where: {
+        clerkId: userId,
+      },
+    });
+
+    const isUserPaid = user?.paid;
+
+    console.log(isUserPaid);
+
+    if (!isUserPaid) {
+      console.log("User is not authorized to make this request");
+      return NextResponse.json({
+        message: "User is not authorized to make this request",
+        status: 403,
+      });
+    }
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [

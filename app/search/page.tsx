@@ -1,5 +1,5 @@
 "use client";
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useEffect, useMemo, useState } from "react";
 import SearchHeader from "./components/search-header";
 import DOMPurify from "dompurify";
 import { unified } from "unified";
@@ -8,15 +8,17 @@ import remarkRehype from "remark-rehype";
 import rehypeReact from "rehype-react";
 import { Quote } from "../components/quote";
 import { jsx, jsxs } from "react/jsx-runtime";
-import { attachQuoteToUser, QuoteArg } from "../actions/actions";
+import { attachQuoteToUser, getActiveSub, QuoteArg } from "../actions/actions";
 import Toast from "../components/toast";
 import Loading from "../components/loading";
+import DrawerShad from "./components/drawer";
 
 const preProcessMarkdown = (text: string) => {
   return text.replace(/\[quote\](.*?)\[\/quote\]/g, "> $1");
 };
 
 export default function Page() {
+  let isSubActive: boolean = false;
   const [input, setInput] = useState<string>("");
   const [output, setOutput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -26,11 +28,19 @@ export default function Page() {
     subText: "",
   });
 
+  const [isError, setIsError] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
+
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
     setInput(e.target.value);
   };
 
   const handleSearch = async () => {
+    if (!isSubActive) {
+      return <DrawerShad />;
+    }
+
     if (input.length <= 3) {
       return;
     }
@@ -46,8 +56,12 @@ export default function Page() {
         body: JSON.stringify({ input }),
       });
 
-      if (response.status !== 200) {
-        console.error("Error searching for book: ", response.statusText);
+      const data = await response.json();
+
+      if (data.status !== 200) {
+        console.error("Error searching for book: ", data.message);
+        setIsError(true);
+        setErrorMessage("Something went wrong. Please try again later");
         setLoading(false);
         return;
       }
@@ -159,12 +173,27 @@ export default function Page() {
     return <Toast text={toastMessage.text} subText={toastMessage.subText} />;
   };
 
+  useEffect(() => {
+    const checkSub = async () => {
+      const sub = await getActiveSub();
+      if (sub.status === 200) {
+        isSubActive = sub.activeSub as boolean;
+      }
+    };
+
+    checkSub();
+  }, []);
+
   return (
     <div className="min-h-screen sm:mx-auto mx-14">
       <SearchHeader
+        isActiveSub={isSubActive}
         handleSearchInput={handleSearchInput}
         handleSearch={handleSearch}
       />
+      {isError && (
+        <div className="text-red-500 text-center mt-4">{errorMessage} 😳</div>
+      )}
       {loading ? (
         <div className="flex justify-center items-center h-96">
           <Loading />

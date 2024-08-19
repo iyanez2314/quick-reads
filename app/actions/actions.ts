@@ -106,3 +106,37 @@ export async function deleteQuote(formData: FormData) {
     await prisma.$disconnect();
   }
 }
+
+export async function getActiveSub() {
+  try {
+    const { userId } = auth();
+
+    if (!userId) {
+      throw new Error("User not authenticated");
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId: userId },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const isActiveSub = user.paid;
+
+    await prisma.$disconnect();
+
+    return {
+      message: "Subscription Found",
+      activeSub: isActiveSub,
+      status: 200,
+    };
+  } catch (error) {
+    console.error(error);
+    await prisma.$disconnect();
+    return { message: "Error Getting Subscription", status: 500 };
+  } finally {
+    await prisma.$disconnect();
+  }
+}

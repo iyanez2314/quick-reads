@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import { Space_Grotesk } from "next/font/google";
 import { Lunasima } from "next/font/google";
 import "./globals.css";
 import Container from "./contianer";
@@ -8,8 +6,6 @@ import Navbar from "./components/navbar";
 import Footer from "./components/footer";
 import { ClerkProvider } from "@clerk/nextjs";
 
-const inter = Inter({ subsets: ["latin"] });
-const spaceGrotesk = Space_Grotesk({ subsets: ["latin"] });
 const lunasima = Lunasima({ weight: ["400", "700"], subsets: ["latin"] });
 
 export const metadata: Metadata = {

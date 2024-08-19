@@ -20,6 +20,7 @@ model User {
   clerkId  String   @unique
   email    String   @unique
   name     String?
+  paid     Boolean  @default(false)
   quotes   QuotesOnUsers[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
