@@ -14,7 +14,7 @@ const stripePromise = loadStripe(
 
 const lineItems = [
   {
-    price: "price_1PpIIhHdihHajtwvhxXcdzFp",
+    price: "price_1PpiIkHdihHajtwvAghGnfGx",
     quantity: 1,
   },
 ];
