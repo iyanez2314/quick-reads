@@ -15,6 +15,8 @@ export default async function SavedQuotesContainer() {
   // I need to call this function everytime the page is loaded
   const usersSavedQuotes = (await usersQuotes(userId)) as Array<any>;
 
+  console.log(usersSavedQuotes);
+
   return (
     <div className="flex flex-col items-center">
       <Suspense fallback={<Loading />}>
@@ -38,7 +40,7 @@ export default async function SavedQuotesContainer() {
               <p className="text-lg">You have not saved any quotes yet. 🥺</p>
             )
           }
-          {usersSavedQuotes.map((quote) => (
+          {usersSavedQuotes?.map((quote) => (
             <Fragment key={quote.quote.id}>
               <SavedQuote
                 id={quote.quote.id}
