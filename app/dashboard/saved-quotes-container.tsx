@@ -13,7 +13,7 @@ export default async function SavedQuotesContainer() {
   }
 
   // I need to call this function everytime the page is loaded
-  const usersSavedQuotes = (await usersQuotes(userId)) as Array<any>;
+  const usersSavedQuotes = (await usersQuotes(userId)) as Array<any> | null;
 
   console.log(usersSavedQuotes);
 
@@ -36,7 +36,7 @@ export default async function SavedQuotesContainer() {
         <div className="flex flex-col gap-4 mt-4 items-center pb-12 ">
           {
             // If there are no quotes saved, show a message
-            usersSavedQuotes.length === 0 && (
+            usersSavedQuotes?.length === 0 && (
               <p className="text-lg">You have not saved any quotes yet. 🥺</p>
             )
           }
