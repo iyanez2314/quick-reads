@@ -36,16 +36,12 @@ async function openAiSearch(book: string) {
   try {
     const { userId } = auth();
 
-    console.log(userId);
-
     if (!userId) {
       return NextResponse.json({
         message: "unauthorized request made",
         status: 401,
       });
     }
-
-    console.log(userId);
 
     const user = await prisma.user.findUnique({
       where: {
@@ -54,8 +50,6 @@ async function openAiSearch(book: string) {
     });
 
     const isUserPaid = user?.paid;
-
-    console.log(isUserPaid);
 
     if (!isUserPaid) {
       console.log("User is not authorized to make this request");
@@ -71,7 +65,7 @@ async function openAiSearch(book: string) {
         {
           role: "system",
           content:
-            "You are an assistant that provides in-depth details about entrepreneurial books. When you present quotes, format them using the custom Markdown syntax [quote]...[/quote]. If the information given to you is not about books, inform the user that you are ONLY designed to give in-depth details about books. Please provide 5 quotes from the book and additional details about the book.",
+            "You are an assistant that provides in-depth details about entrepreneurial books. When you present quotes, format them using the custom Markdown syntax [quote]...[/quote]. If the information given to you is not about books, inform the user that you are ONLY designed to give in-depth details about books. Please provide 10 quotes from the book and additional details about the book.",
         },
         {
           role: "user",

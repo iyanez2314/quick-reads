@@ -1,7 +1,8 @@
 import React, { Fragment, Suspense } from "react";
-import { auth } from "@clerk/nextjs/server";
 import SavedQuote from "./components/saved-quote";
 import Loading from "../components/loading";
+import { auth } from "@clerk/nextjs/server";
+import { useClerk } from "@clerk/nextjs";
 import { usersQuotes } from "@/data-layer/user";
 
 export default async function SavedQuotesContainer() {
@@ -11,24 +12,25 @@ export default async function SavedQuotesContainer() {
     return null;
   }
 
+  // I need to call this function everytime the page is loaded
   const usersSavedQuotes = (await usersQuotes(userId)) as Array<any>;
 
   return (
     <div className="flex flex-col items-center">
-      <div className="flex items-baseline w-full sm:w-1/2  justify-between">
-        <h1 className="text-xl text-left text-black font-bold mt-12">
-          Your Saved Quotes
-        </h1>
-
-        <input
-          type="text"
-          placeholder="Book Title"
-          className="input bg-transparent"
-        />
-      </div>
-
-      {/* Quotes container */}
       <Suspense fallback={<Loading />}>
+        <div className="flex items-baseline w-full sm:w-1/2  justify-between">
+          <h1 className="text-xl text-left text-black font-bold mt-12">
+            Your Saved Quotes
+          </h1>
+
+          <input
+            type="text"
+            placeholder="Book Title"
+            className="input bg-transparent"
+          />
+        </div>
+
+        {/* Quotes container */}
         <div className="flex flex-col gap-4 mt-4 items-center pb-12 ">
           {
             // If there are no quotes saved, show a message

@@ -18,7 +18,6 @@ const preProcessMarkdown = (text: string) => {
 };
 
 export default function Page() {
-  let isSubActive: boolean = false;
   const [input, setInput] = useState<string>("");
   const [output, setOutput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -27,6 +26,8 @@ export default function Page() {
     text: "",
     subText: "",
   });
+
+  const [isSubActive, setIsSubActive] = useState<boolean>(false);
 
   const [isError, setIsError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -56,10 +57,8 @@ export default function Page() {
         body: JSON.stringify({ input }),
       });
 
-      const data = await response.json();
-
-      if (data.status !== 200) {
-        console.error("Error searching for book: ", data.message);
+      if (!response.ok) {
+        console.error("Error searching for book: ");
         setIsError(true);
         setErrorMessage("Something went wrong. Please try again later");
         setLoading(false);
@@ -91,6 +90,34 @@ export default function Page() {
     } finally {
       setLoading(false);
     }
+  };
+  const renderMarkdown = (text: string) => {
+    const preProcessed = preProcessMarkdown(text);
+    const processedContent = unified()
+      .use(remarkParse)
+      .use(remarkRehype)
+      .use(rehypeReact, {
+        jsx: jsx,
+        jsxs: jsxs,
+        components: {
+          blockquote: (props: any) => (
+            <Quote
+              {...props}
+              onQuoteClicked={addedQuote}
+              currentInput={input}
+            />
+          ),
+          p: Paragraph,
+          li: Paragraph,
+          h1: Header,
+          h2: Header,
+          h3: Header,
+        },
+        Fragment,
+      } as any)
+      .processSync(preProcessed).result;
+
+    return processedContent;
   };
 
   const addedQuote = async (quote: string) => {
@@ -137,35 +164,6 @@ export default function Page() {
     }
   };
 
-  const renderMarkdown = (text: string) => {
-    const preProcessed = preProcessMarkdown(text);
-    const processedContent = unified()
-      .use(remarkParse)
-      .use(remarkRehype)
-      .use(rehypeReact, {
-        jsx: jsx,
-        jsxs: jsxs,
-        components: {
-          blockquote: (props: any) => (
-            <Quote
-              {...props}
-              onQuoteClicked={addedQuote}
-              currentInput={input}
-            />
-          ),
-          p: Paragraph,
-          li: Paragraph,
-          h1: Header,
-          h2: Header,
-          h3: Header,
-        },
-        Fragment,
-      } as any)
-      .processSync(preProcessed).result;
-
-    return processedContent;
-  };
-
   const renderToast = () => {
     if (!toastVisible) {
       return null;
@@ -176,8 +174,10 @@ export default function Page() {
   useEffect(() => {
     const checkSub = async () => {
       const sub = await getActiveSub();
+
+      console.log(sub);
       if (sub.status === 200) {
-        isSubActive = sub.activeSub as boolean;
+        setIsSubActive(sub.activeSub || false);
       }
     };
 
